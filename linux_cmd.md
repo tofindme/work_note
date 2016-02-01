@@ -22,3 +22,24 @@
 - 设置硬件时间，再同步系统时间
 	- hwclock --set --date="2015-12-25 18:00:00" 
 	- hwclock --hctosys
+
+#### 导出库的表结构
+`mysqldump -h183.61.111.199 -P3306 -u username -ppassword -d oss_fgame2_date > /home/yibin/oss1.sql`
+
+#### grep查找时过滤查找进程的本身
+`ps -ef|grep nginx|grep -v grep`
+
+#### nslookup 查看使用的dns命令
+`nslookup www.baidu.com`
+
+#### 查看.gz包文件列表
+`gzip -dc s.tar.gz | tar tvf -`
+
+#### 查看linux硬件信息
+`dmsg`					
+`cat /proc/cpuinfo`		
+`cat /proc/meminfo`		
+`lshw`					
+`lsblk`					
+`free -m`				
+`free -m`				
