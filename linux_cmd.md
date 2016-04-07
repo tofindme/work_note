@@ -43,3 +43,36 @@
 `lsblk`					
 `free -m`				
 `free -m`				
+
+#### linux 发送和接收windows文件命令
+rz sz
+    rz(recieve Zmonde)以zmonde协议来传送文件
+
+#### 查看默认shell方式
+- 查看使用的shell
+    `echo $0`
+    `echo $SHELL`
+- 改变默认的shell
+    `chsh -s /bin/zsh`
+
+
+
+
+-------
+
+# 数据库命令
+
+#### 连接数据库
+`mysql -h127.0.0.1 -uuser -P3306 -p`
+
+#### 查看字符编码
+`show variables like '%char%';`
+
+#### 数据表中字符集设置
+`show full columns from tablename;`
+
+
+
+----------
+# golang1.6编译
+http://studygolang.com/articles/3188
