@@ -55,6 +55,11 @@ rz sz
 - 改变默认的shell
     `chsh -s /bin/zsh`
 
+#### vi
+
+- 单词选中 **向后vb**  **向前vw**
+- w 单词前进 b 单词后退 
+- windows 粘贴到linux :set paste 后格式不会再乱
 
 
 
