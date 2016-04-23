@@ -81,3 +81,15 @@ rz sz
 ----------
 # golang1.6编译
 http://studygolang.com/articles/3188
+
+
+--------
+
+
+> git 相关命令
+
+# git no branch
+每次在master上面更新有冲突后会生成一个no branch的分支，这种情况需要在no branch下面解决冲突后再更新再提交，然后再更新用git log查看最新的commit id然后切回master分支，把头指针设置成最新的commit id这样就解决了回master分支再更新的问题
+
+
+直接改head头指针时，先从改到旧的地址，然后又换新的地址

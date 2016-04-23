@@ -48,7 +48,7 @@ struct skynet_message {
 
 ```
 
-**注意：**
+**tips：**
 > 消息类型保存在 `sz |= (size_t)type << MESSAGE_TYPE_SHIFT`
 > 拿回类型用 `sz >> MESSAGE_TYPE_SHIFT` 长度用`sz & MESSAGE_TYPE_MASK`
 
@@ -140,26 +140,14 @@ dispatch_message(struct skynet_context *ctx, struct skynet_message *msg) {
 
 ------
 
-云风哥，打扰下你，在学习你的skynet框架，有个疑问想问下您，希望得到你的解答，知道你对简单的问题不作回答，但我想了许久都没想通。问题描述如下:
-sz |= (size_t)type << MESSAGE_TYPE_SHIFT
-
-sz >> MESSAGE_TYPE_SHIFT 
-sz & MESSAGE_TYPE_MASK
-
-你消息类型通过消息大小用位操作来设置和拿取，为什么刚好用这些宏的值来操作获取？能通俗一点帮忙给个解答吗？
-谢谢！
 
 
-
-## 需要研究和梳理的点
-
-> 后续需要深入理解的点
+##  需要深入理解的点
 
 1. 进程启动过程 
 2. 回调函数调用
-3. 消息接发整个过程
 4. socket 
-
+5. sample架子理解
 
 
 
