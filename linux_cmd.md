@@ -62,6 +62,9 @@ rz sz
 - windows 粘贴到linux :set paste 后格式不会再乱
 
 
+### 删除很特殊的文件
+- `find . -inum 441511 -delete`
+> 如果文件命名很怪可以用此命令来删除
 
 -------
 
