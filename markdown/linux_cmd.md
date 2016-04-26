@@ -82,7 +82,7 @@ rz sz
 
 
 ----------
-# golang1.6编译
+#### golang1.6编译
 http://studygolang.com/articles/3188
 
 
@@ -91,8 +91,31 @@ http://studygolang.com/articles/3188
 
 > git 相关命令
 
-# git no branch
+#### git no branch解决方法
 每次在master上面更新有冲突后会生成一个no branch的分支，这种情况需要在no branch下面解决冲突后再更新再提交，然后再更新用git log查看最新的commit id然后切回master分支，把头指针设置成最新的commit id这样就解决了回master分支再更新的问题
+
+#### git branch操作
+- 新建分支 `git branch name`
+- 提交分支 `git branch push origin name`
+- 删除分支 `git branch -d name`
+- 删除远程分支 `git push origin :name`
+
+
+#### git reset
+
+在操作git时，如果某次提交有误，需要回滚到有误之前的一个commit时，可以更新代码然后创建一个新的分支，然后再到新的分支上面git reset commitid。然后再回到master分支再合并
+
+----
+
+- git
+
+```sh
+git branch dev
+git commit -m //提交到head状态
+git checkout master
+git merge dev
+```
+
 
 
 直接改head头指针时，先从改到旧的地址，然后又换新的地址

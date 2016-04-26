@@ -31,7 +31,8 @@
 
 ### 3 Network
 
-- [container网张](https://docs.docker.com/engine/userguide/networking/dockernetworks/)
+- [container网络配置](https://docs.docker.com/engine/userguide/networking/dockernetworks/)
+- [container独立ip配置](http://www.cnblogs.com/feisky/p/4063162.html)
 
 
 - [ ] 支持以 PDF 格式导出文稿
