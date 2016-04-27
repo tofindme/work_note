@@ -158,11 +158,71 @@ dispatch_message(struct skynet_context *ctx, struct skynet_message *msg) {
 
 ##  需要深入理解的点
 
-1. 进程启动过程 
+1. 进程启动过程
+
+```c
+void 
+skynet_start(struct skynet_config * config) {
+    if (config->daemon) {
+        if (daemon_init(config->daemon)) {
+            exit(1);
+        }
+    }
+    skynet_harbor_init(config->harbor); //用于集群id初始化
+    skynet_handle_init(config->harbor); //上面所说的进程内所有service的handle及保存service的名称
+    skynet_mq_init(); //全局队列初始化
+    skynet_module_init(config->module_path); //加载service-src下面的模块
+    skynet_timer_init(); //定时器初始化
+    skynet_socket_init(); //套接字初始化
+
+    struct skynet_context *ctx = skynet_context_new(config->logservice, config->logger);
+    if (ctx == NULL) {
+        fprintf(stderr, "Can't launch %s service\n", config->logservice);
+        exit(1);
+    }
+
+    //lua脚本加载
+    bootstrap(ctx, config->bootstrap);
+
+    //启动线程及监听相关
+    start(config->thread);
+
+    // harbor_exit may call socket send, so it should exit before socket_free
+    skynet_harbor_exit();
+    skynet_socket_free();
+    if (config->daemon) {
+        daemon_exit(config->daemon);
+    }
+}
+
+```
+skynet启动进程主要与服务相关代码如上面
+
+每个lua服务都有自己的一个队列，并且创建后就会放到全局队列里面，有工作线程会去从全局队列里面去拿服务队列并处理完一条消息后若全局队列不为空再放到全局队列里去返回下个需要处理的部队。为空则返回自己服务的队列
+
+
+
 2. 回调函数调用
-4. socket 
-5. socket最大发送值 64M
-6. sample架子理解
+在加载lua代码的时候`skynet.start(...)`函数里面注册了回调函数
+
+```lua
+function skynet.start(start_func)
+    c.callback(skynet.dispatch_message)
+    skynet.timeout(0, function()
+        skynet.init_service(start_func)
+    end)
+end
+```
+
+3. socket 
+
+
+4. socket最大发送值 64M
+
+5. sample架子理解
+
+
+
 
 ## 服务名
 - skynet为了方便针记住某个服务，可以为每个独立的服务起一个名字，名字格式`.name`
