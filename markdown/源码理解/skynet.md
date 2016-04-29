@@ -156,9 +156,7 @@ dispatch_message(struct skynet_context *ctx, struct skynet_message *msg) {
 
 
 
-##  需要深入理解的点
-
-1. 进程启动过程
+#### 3. 进程启动过程
 
 ```c
 void 
@@ -171,7 +169,7 @@ skynet_start(struct skynet_config * config) {
     skynet_harbor_init(config->harbor); //用于集群id初始化
     skynet_handle_init(config->harbor); //上面所说的进程内所有service的handle及保存service的名称
     skynet_mq_init(); //全局队列初始化
-    skynet_module_init(config->module_path); //加载service-src下面的模块
+    skynet_module_init(config->module_path); //加载service-src下面的模块 logger harbor snlua
     skynet_timer_init(); //定时器初始化
     skynet_socket_init(); //套接字初始化
 
@@ -214,50 +212,27 @@ function skynet.start(start_func)
 end
 ```
 
-3. socket 
 
 
-4. socket最大发送值 64M
-
-5. sample架子理解
+#### 4. skynet服务
 
 
+##### 4.1 服务标识
 
-
-## 服务名
 - skynet为了方便针记住某个服务，可以为每个独立的服务起一个名字，名字格式`.name`
 
 
-> 一个服务的名字可以重复设置吗？
-> 两个服务的名字可以相同吗？
+> 一个服务的名字可以重复设置吗？(可以)
+> 两个服务的名字可以相同吗？(不可以，已经有了这样一个名字直接返回空)
+
 
 -----
 
-带着这些疑问就去翻阅代码去解决脑海里的疑点，首先从`skynet.name('.myservice')`的代码跟到他调用的c函数，所有处理针对服务的一些函数都在`skynet_server.c`文件里面，最后按参数找到最终处理名字的逻辑`skynet_handle.c`，大体看了下简单的实现,代码说明按自己的理解整理下。
 
-- 命令映入结构
-```c
-static struct command_func cmd_funcs[] = {
-    { "TIMEOUT", cmd_timeout },
-    { "REG", cmd_reg },
-    { "QUERY", cmd_query },
-    { "NAME", cmd_name },
-    { "EXIT", cmd_exit },
-    { "KILL", cmd_kill },
-    { "LAUNCH", cmd_launch },
-    { "GETENV", cmd_getenv },
-    { "SETENV", cmd_setenv },
-    { "STARTTIME", cmd_starttime },
-    { "ENDLESS", cmd_endless },
-    { "ABORT", cmd_abort },
-    { "MONITOR", cmd_monitor },
-    { "MQLEN", cmd_mqlen },
-    { "LOGON", cmd_logon },
-    { "LOGOFF", cmd_logoff },
-    { "SIGNAL", cmd_signal },
-    { NULL, NULL },
-};
-```
+##### 4.1 服务名字存储及handle的存储结构和服务相关的命令映射
+
+
+带着这些疑问就去翻阅代码去解决脑海里的疑点，首先从`skynet.name('.myservice')`的代码跟到他调用的c函数，所有处理针对服务的一些函数都在`skynet_server.c`文件里面，最后按参数找到最终处理名字的逻辑`skynet_handle.c`，大体看了下简单的实现,代码说明按自己的理解整理下。
 
 - 数据结构
 
@@ -284,7 +259,32 @@ struct handle_storage {
 
 ```
 
-## 服务名字代码说明下服务名set和get
+- 命令映入结构
+```c
+static struct command_func cmd_funcs[] = {
+    { "TIMEOUT", cmd_timeout },
+    { "REG", cmd_reg },
+    { "QUERY", cmd_query },
+    { "NAME", cmd_name },
+    { "EXIT", cmd_exit },
+    { "KILL", cmd_kill },
+    { "LAUNCH", cmd_launch },
+    { "GETENV", cmd_getenv },
+    { "SETENV", cmd_setenv },
+    { "STARTTIME", cmd_starttime },
+    { "ENDLESS", cmd_endless },
+    { "ABORT", cmd_abort },
+    { "MONITOR", cmd_monitor },
+    { "MQLEN", cmd_mqlen },
+    { "LOGON", cmd_logon },
+    { "LOGOFF", cmd_logoff },
+    { "SIGNAL", cmd_signal },
+    { NULL, NULL },
+};
+```
+
+
+##### 4.2 服务名字代码说明下服务名set和get
 
 - 服务名set
 
@@ -314,6 +314,7 @@ _insert_name(struct handle_storage *s, const char * name, uint32_t handle) {
 }
 
 //用二分法遍历已经注册了名称的数组，如果找到同名的服务直接return(并不会报错，lua层只会得到nil最好用assert来处理),否则按字符串的大小插入合适的位置
+
 ```
 
 
@@ -396,7 +397,7 @@ skynet_handle_register(struct skynet_context *ctx) {
 //后续要好好分析下这段代码
 ```
 
-- handle值转成`:`+八位十六进是数组成
+- handle值转换`:`+八位十六进是数组成
 
 ```c
 static void
@@ -411,3 +412,17 @@ id_to_hex(char * str, uint32_t id) {
     str[9] = '\0';
 }
 ```
+
+#### 5. 模块与服务之间的关系
+
+> 工作中，在看同事写的日志模块的实现，在看代码的时候出现了一些疑问点。游戏里面的货币、战斗、登录日志、充值等一些日志的时候。由于写了一个自己的日志模块代码，并且启了各种日志分类的skynet服务。并且在目录下面创建了不同的文件，所以仔细跟踪了一下这个代码实现
+
+
+
+
+
+#### 6. socket 
+
+
+
+#### 7. sample架子理解

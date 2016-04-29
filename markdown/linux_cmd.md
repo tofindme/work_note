@@ -66,6 +66,11 @@ rz sz
 - `find . -inum 441511 -delete`
 > 如果文件命名很怪可以用此命令来删除
 
+
+### 删除除指定文件的其它文件
+ls |grep -v name |xargs rm -f
+
+
 -------
 
 # 数据库命令
