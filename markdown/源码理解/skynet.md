@@ -30,13 +30,6 @@
 #define PTYPE_TAG_ALLOCSESSION 0x20000         //用 type | PTYPE_TAG_ALLOCSESSION 来指定是否需要创建session 
 ```
 
-<color=red>
-一直在想type的值的设置和取值为什么这样设计，也查阅了一些位操作方面的知识，还是不太知道，后问了下一老司机同事，他翻开云风大大博客对这样的设计已经给出了答案，阅读和思考后最终还是清楚了。
-
-因为type的值是一个byte，取值范围也就是0-255，一个在服务内传递的消息的在16M(24个bit)以内，所以把type的值放在sz的最高位来保存。
-
-</color>
-
 
 **具体可看`skynet\lualib-src\lua-skynet.c ——> _send(...) `函数实现**
 
@@ -80,12 +73,12 @@ local skynet = {
 }
 ```
 
-<color=red>
+<font color=red>
 一直在想type的值的设置和取值为什么这样设计，也查阅了一些位操作方面的知识，还是不太知道，后问了下一老司机同事，他翻开云风大大博客对这样的设计已经给出了答案，阅读和思考后最终还是清楚了。
 
-因为type的值是一个byte，取值范围也就是0-255，一个在服务内传递的消息的在16M(24个bit)以内，所以把type的值放在sz的最高位来保存。所以在取type值的时候sz的二进制左移MESSAGE_TYPE_SHIFT即可，
+因为type的值是一个byte，取值范围也就是0-255，一个在服务内传递的消息的在16M(24个bit  2<sup>14</sup>*2<sup>10</sup>)以内，所以把type的值放在sz的最高位来保存。所以在取type值的时候sz的二进制左移MESSAGE_TYPE_SHIFT即可，
 而sz的值的话只要取除去最高位再sz的二进制右移高位即MESSAGE_TYPE_MASK。
-</color>
+</font>
 
 
 #### 2. skynet里面是由各种lua服务来组成的，必然服务之间需要能信来往，当然也就包含阻塞发消息和非阻塞的方式
@@ -106,23 +99,23 @@ Service B-->Service A: Yes,我收到了,这是我回你的包！
 - 非阻塞调用
 
     ```lua
-function skynet.send(addr, typename, ...)
-    local p = proto[typename]
-    return c.send(addr, p.id, 0 , p.pack(...))
-end
+    function skynet.send(addr, typename, ...)
+        local p = proto[typename]
+        return c.send(addr, p.id, 0 , p.pack(...))
+    end
     ```
 
 - 阻塞调用
 
     ```lua
-function skynet.call(addr, typename, ...)
-    local p = proto[typename]
-    local session = c.send(addr, p.id , nil , p.pack(...))
-    if session == nil then
-        error("call to invalid address " .. skynet.address(addr))
+    function skynet.call(addr, typename, ...)
+        local p = proto[typename]
+        local session = c.send(addr, p.id , nil , p.pack(...))
+        if session == nil then
+            error("call to invalid address " .. skynet.address(addr))
+        end
+        return p.unpack(yield_call(addr, session))
     end
-    return p.unpack(yield_call(addr, session))
-end
     ```
 
 * 阻塞与非阻塞的send函数的第三个参数分别为nil和0，nil意思就是session是由skynet分配来分配
@@ -418,7 +411,111 @@ id_to_hex(char * str, uint32_t id) {
 > 工作中，在看同事写的日志模块的实现，在看代码的时候出现了一些疑问点。游戏里面的货币、战斗、登录日志、充值等一些日志的时候。由于写了一个自己的日志模块代码，并且启了各种日志分类的skynet服务。并且在目录下面创建了不同的文件，所以仔细跟踪了一下这个代码实现
 
 
+之前在说进程启动过程时候有说过会初始化一些模块，这些模块包含snlua、自带的logger、以及用于集群实现的harbor模块和网关的一个模块,这次就仔细阅读了snlua和自带的logger各自模块的服务初始化过程。
 
+
+```c
+struct skynet_context * 
+skynet_context_new(const char * name, const char *param) {
+    struct skynet_module * mod = skynet_module_query(name); //查找此服务对应的模块名称
+
+    if (mod == NULL)
+        return NULL;
+
+    void *inst = skynet_module_instance_create(mod); //创建对应的模块
+    if (inst == NULL)
+        return NULL;
+    struct skynet_context * ctx = skynet_malloc(sizeof(*ctx));
+    CHECKCALLING_INIT(ctx)
+
+    ctx->mod = mod;
+    ctx->instance = inst;
+    ctx->ref = 2;
+    ctx->cb = NULL;
+    ctx->cb_ud = NULL;
+    ctx->session_id = 0;
+    ctx->logfile = NULL;
+
+    ctx->init = false;
+    ctx->endless = false;
+    // Should set to 0 first to avoid skynet_handle_retireall get an uninitialized handle
+    ctx->handle = 0;    
+    ctx->handle = skynet_handle_register(ctx);
+    struct message_queue * queue = ctx->queue = skynet_mq_create(ctx->handle);
+    // init function maybe use ctx->handle, so it must init at last
+    context_inc();
+
+    CHECKCALLING_BEGIN(ctx)
+    int r = skynet_module_instance_init(mod, inst, ctx, param); //初始化一个模块下面的服务 param是服务初始化的参数
+    CHECKCALLING_END(ctx)
+    if (r == 0) {
+        struct skynet_context * ret = skynet_context_release(ctx);
+        if (ret) {
+            ctx->init = true;
+        }
+        skynet_globalmq_push(queue);
+        if (ret) {
+            skynet_error(ret, "LAUNCH %s %s", name, param ? param : "");
+        }
+        return ret;
+    } else {
+        skynet_error(ctx, "FAILED launch %s", name);
+        uint32_t handle = ctx->handle;
+        skynet_context_release(ctx);
+        skynet_handle_retire(handle);
+        struct drop_t d = { handle };
+        skynet_mq_release(queue, drop_message, &d);
+        return NULL;
+    }
+}
+
+**示例**
+    skynet_context_new("snlua", "bootstrap")
+
+```
+
+所以模块和服务是一对一对的关系，后来又看了下`skynet.newservice(...)`和`skynet.launch(...)`函数的实现，newservice是能过一个叫`.launch`的服务(此服务是在`bootstrap`服务启动的时候创建的)包装launch函数来实现的。
+
+
+```lua
+function skynet.newservice(name, ...)
+    return skynet.call(".launcher", "lua" , "LAUNCH", "snlua", name, ...)
+end
+
+function skynet.launch(...)
+    local addr = c.command("LAUNCH", table.concat({...}," "))
+    if addr then
+        return tonumber("0x" .. string.sub(addr , 2))
+    end
+end
+```
+
+下面说下模块的加载过程，模块实际就是一些动态链接库(.so)，然后实现一些共用的函数接口，模块定义的结构体如下:
+
+```c
+
+//存储所有模块结构体
+
+#define MAX_MODULE_TYPE 32
+struct modules {
+    int count;
+    struct spinlock lock;
+    const char * path;
+    struct skynet_module m[MAX_MODULE_TYPE];
+};
+
+struct skynet_module {
+    const char * name;
+    void * module;
+    skynet_dl_create create;        //模块so的函数入口
+    skynet_dl_init init;            //同上
+    skynet_dl_release release;      //同上
+    skynet_dl_signal signal;        //同上
+};
+
+
+
+```
 
 
 #### 6. socket 

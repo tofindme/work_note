@@ -50,8 +50,11 @@ rz sz
 
 #### 查看默认shell方式
 - 查看使用的shell
-    `echo $0`
-    `echo $SHELL`
+
+```shell
+    echo $0
+    echo $SHELL
+```
 - 改变默认的shell
     `chsh -s /bin/zsh`
 
@@ -70,6 +73,14 @@ rz sz
 ### 删除除指定文件的其它文件
 ls |grep -v name |xargs rm -f
 
+
+### 获取系统配置命令
+
+```shell
+getconf -a
+getconf NAME_MAX / #获取文件名称最大长的长度
+getconf PATH_MAX / #获取文件路径最大的长度
+```
 
 -------
 
@@ -121,6 +132,7 @@ git checkout master
 git merge dev
 ```
 
+git reset HEAD~ ^ 后面符号详解
 
 
 直接改head头指针时，先从改到旧的地址，然后又换新的地址
