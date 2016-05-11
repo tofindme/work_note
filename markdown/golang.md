@@ -114,12 +114,41 @@ func main() {
 
 #### 4.2 一个简单的http程序
 
+```golang
+
+package main
+
+import (
+	"io"
+	"net/http"
+	"log"
+)
+
+// hello world, the web server
+func HelloServer(w http.ResponseWriter, req *http.Request) {
+	io.WriteString(w, "hello, world!\n")
+}
+
+func main() {
+	http.HandleFunc("/hello", HelloServer)
+	err := http.ListenAndServe(":12345", nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+```
 
 #### 4.3 利用通道做一个消息产生和消费
 
+```golang
+
+```
+
 #### 4.4 接口的应用编程
 
+
 #### 4.5 socket 
+
 
 #### 4.6 优秀的开源项目
 
