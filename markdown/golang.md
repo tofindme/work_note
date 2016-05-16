@@ -51,6 +51,7 @@
 - 结构体的代码展示
 - 接口的应用编程
 - socket Tcp
+- testing库
 - 优秀的开源项目
 
 http://tour.golangtc.com/welcome/
@@ -122,11 +123,16 @@ import (
 	"io"
 	"net/http"
 	"log"
+    "sync/atomic"
+    "fmt"
 )
+
+var num int32 = 0
 
 // hello world, the web server
 func HelloServer(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "hello, world!\n")
+    atomic.AddInt32(&num, 1)
+    io.WriteString(w, fmt.Sprintf("你是第%d个访问者\n",num))
 }
 
 func main() {
@@ -136,19 +142,232 @@ func main() {
 		log.Fatal("ListenAndServe: ", err)
 	}
 }
+
 ```
 
 #### 4.3 利用通道做一个消息产生和消费
 
 ```golang
+package main
+
+import (
+    "fmt"
+    "time"    
+)
+
+// 代表只写
+func Producer(ch chan<- int){
+    i := 1
+    for{
+        time.Sleep(time.Second)
+        ch <- i
+        i++
+        if ( i == 3 ){
+            close(ch)
+            break
+        }
+    }
+}
+
+
+// 代表只读
+func Consumer(ch <-chan int){
+    for data := range ch {
+        fmt.Printf("out put is %v\n", data)
+    }
+}
+
+func main(){
+    channel := make(chan int, 1)
+    
+    go Producer(channel)
+    
+    go Consumer(channel)
+    
+    time.Sleep(10 * time.Second)
+}
+
+
+
+-----
+
+//一个select的例子
+package main
+
+import (
+    "fmt"
+    "time"
+    "math/rand"
+)
+
+func init(){
+    rand.Seed(42)
+}
+
+func GetValue(ch chan<- int){
+    i := 0
+    for{
+        ch <- rand.Intn(20)
+        i++
+        if (i == 10){
+            close(ch)
+            break;
+        }
+    }
+}
+
+
+func main()  {
+    ticker := time.NewTicker(time.Second * 5)
+    sig := make(chan int)
+    
+    go GetValue(sig)
+    
+    exit := false
+    
+    for {
+        select{
+            case signal,err := <- sig: // 关闭了能过，err判断
+                if ( err == false){
+                    exit = true
+                    break;
+                }
+                fmt.Printf("select signal is %d err is %v\n", signal, err)
+            case <-ticker.C:
+                exit = true
+                break;
+        }
+        
+        if (exit == true){
+            break;
+        }        
+    }
+}
+
 
 ```
 
 #### 4.4 接口的应用编程
 
+```golang
+
+
+```
+
 
 #### 4.5 socket 
 
+```golang
+ln, err := net.Listen("tcp", ":8080")
+if err != nil {
+    // handle error
+}
+for {
+    conn, err := ln.Accept()
+    if err != nil {
+        // handle error
+    }
+    go handleConnection(conn)
+}
 
-#### 4.6 优秀的开源项目
+```
+
+
+#### 4.6 testing库
+
+> go提供了丰富的测试库，可以针对某个函数测试，也可以做性能测试，go自带的sdk库基本都是带*_test.go的，使用起来也比较方便
+
+
+```golang
+
+// 单元测试
+package main
+
+import(
+    "testing"
+    "encoding/json"
+    "os"
+    "fmt"
+)
+
+func TestMarshal(t *testing.T) {
+    fmt.Println("in TestMarshal do some logic")
+    type Json struct {
+        Name string `json:"name"`
+        Age  int `json:"age"`
+    }
+    
+    person := Json{Name:"yibin", Age:25}
+    
+    b, err := json.Marshal(person)
+    if err != nil {
+        t.Error("marshal failed error:", err)
+    }
+    os.Stdout.Write(b)
+}
+
+
+func TestUnmarshal(t *testing.T) {
+    fmt.Println("in TestMarshal do some logic")
+    str := `{"name":"yibin", "age" : 25}`
+    type Json struct {
+        Name string `json:"name"`
+        Age int     `json:"age"`
+    }
+    var des Json
+    err := json.Unmarshal([]byte(str), &des)
+    if err != nil {
+        fmt.Println("error:", err)
+    }
+    fmt.Printf("person is %v \n", des)    
+}
+
+// go test
+
+
+//性能测试
+package main
+
+import(
+    "testing"
+)
+
+func test(x int) int {
+    return x * 2
+}
+
+
+func BenchmarkTest(b *testing.B){
+    for i := 0; i < b.N; i++ {
+        _ = test(i)
+    }
+}
+
+
+func BenchmarkAnonymous(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        _ = func(x int) int{
+            return x * 2
+        }(i)
+    }
+}
+
+
+func BenchmarkClosure(b *testing.B){
+    for i := 0; i < b.N; i++ {
+        _ = func() int{
+            return i * 2
+        }()
+    }
+}
+
+// go test -v -bench . -benchmem
+
+
+```
+
+
+#### 4.7 优秀的开源项目
+
+
 
