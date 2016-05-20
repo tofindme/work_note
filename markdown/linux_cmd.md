@@ -82,6 +82,13 @@ getconf NAME_MAX / #获取文件名称最大长的长度
 getconf PATH_MAX / #获取文件路径最大的长度
 ```
 
+
+### tee命令
+
+> 有了这个命令就不需要用定向符(>)来重定向的指定文件了，这个命令就是读取标准输入的内容写到标准输出或文件
+
+like man descirbed:"tee - read from standard input and write to standard output and files"
+
 -------
 
 # 数据库命令
@@ -108,7 +115,7 @@ http://studygolang.com/articles/3188
 > git 相关命令
 
 #### git no branch解决方法
-每次在master上面更新有冲突后会生成一个no branch的分支，这种情况需要在no branch下面解决冲突后再更新再提交，然后再更新用git log查看最新的commit id然后切回master分支，把头指针设置成最新的commit id这样就解决了回master分支再更新的问题
+每次在master上面更新有冲突后会生成一个no branch的分支，这种情况需要在no branch下面解决冲突后再更新再提交，然后再更新用git log查看最新的commit id然后切回master分支，把头指针设置成最新的commit id这样就解决了回master分支再更新的问题,这有可能造成HEAD里的变动，这可以把所有的修改checkout然后再update
 
 #### git branch操作
 - 新建分支 `git branch name`

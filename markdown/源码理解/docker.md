@@ -1,6 +1,6 @@
 # docker实践
 
-> docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。起停一个container也是相对方便和快速的
+> docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的
 
 
 *此笔记记录阅读docker官网并实践操作所记*
@@ -8,10 +8,10 @@
 ### 1 环境准备
 
 - 下载安装centos7.2镜像虚拟机
-- [安装docker](http://dockone.io/article/1059)
+- [安装docker](https://docs.docker.com/engine/installation/linux/centos/)
 - 启动docker `systemctl start docker`
 
-> docker版本现在到了1.10了，需要linux 3.10的内核，所以下载的centos7来操作
+> docker版本现在到了1.11了，需要linux 3.10的内核，所以下载的centos7来操作
 
 
 **服务启动脚本在 `/usr/lib/systemd/system` 目录下**
@@ -80,7 +80,7 @@ yum install net-tools -y
 #### 3.3 搭建游戏服务器的基础image
 
 1. 新建一个容器
-2. 安装gcc g++ vim net-tool gcc-c++等工具
+2. 安装gcc g++ vim net-tools gcc-c++等工具
 3. 源码安装redis及yum安装mysql
 4. build一个新的image
 
@@ -174,7 +174,7 @@ docker run -itd --privileged=true -p 10.10.2.62:6379:6379 -p 10.10.2.62:3306:330
 > - [网卡配置配置ip](http://www.2cto.com/os/201306/223532.html) 
 > - [snat和dnat说明](http://www.cnblogs.com/iceocean/articles/1616305.html)
 > - [进入容器说明](http://blog.csdn.net/u010397369/article/details/41045251)
-> - http://xiaorui.cc/2015/05/19/%E8%A7%A3%E5%86%B3docker%E7%BB%91%E5%AE%9A%E5%88%86%E9%85%8D%E9%9D%99%E6%80%81%E5%A4%96%E7%BD%91ip%E7%9A%84%E9%97%AE%E9%A2%98/
+> - [静态ip](http://xiaorui.cc/2015/05/19/%E8%A7%A3%E5%86%B3docker%E7%BB%91%E5%AE%9A%E5%88%86%E9%85%8D%E9%9D%99%E6%80%81%E5%A4%96%E7%BD%91ip%E7%9A%84%E9%97%AE%E9%A2%98/)
 
 
 #### 3.4 路由规则
