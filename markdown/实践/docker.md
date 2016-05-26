@@ -1,11 +1,55 @@
-# docker实践
+# docker介绍
 
 > docker是用google开源语言golang开发的一款类似vm这样的管理容器的开源软件，他的优势在于不像vm一样启动一个虚拟机需要等待漫长的时间，而对docker而言只需要简单的启动一个image就相当于运行一个独立的container。各个container是相互独立的。启停一个container也是相对方便和快速的
 
 
-*此笔记记录阅读docker官网并实践操作所记*
+*此笔记记录阅读docker官网及博客并实践操作所记*
 
-### 1 环境准备
+- docker是个什么东西
+- docker和vm的区别
+- docker实践讲解
+
+
+### 1. 什么是docker
+
+> dokcer的英文是叫码头工人，这个很有趣，然而它所做的一切也正像码头工人所干的事一样。docker是一个软件集合，帮你做了码头的活，所有的东西都用我的容器来打包，你可以在你的容器里面运行你自己的东西。
+
+
+<div>
+</br></br>
+&nbsp;&nbsp;&nbsp;<img src='logo.png' align="middle"></img></br></br></br><img src="truck.png"></img>
+<img src='docker_engin.png'></img>
+</div>
+
+<div>
+<img src="architecture.png"></img>
+</div>
+
+
+### 2. 和通常我们说的vm的区别
+
+> docker的容器就类似我们vm的安装的iso镜像，只是vm和docker已经把环境的各种依赖的工作都准备好了。docker非常方便的廉价的运行多个container。 container实际是是独立于操作系统上的一个独立的进程，这个进程实现了资源和环境的隔离。它拥有自己的ipc、network、user及pid等
+
+<div>
+
+<img src='diff_vm.png' width="300" height="400" ></img>
+&nbsp; &nbsp; &nbsp; &nbsp;
+
+<img src='diff-docker.png' width="300" height="400"></img>
+
+</div>
+
+
+### 3. docker实践
+
+- 安装环境
+- docker组成部分的一些概念
+- 网络
+- 构建属于自己image的
+- docker生态
+
+
+#### 3.1 环境准备
 
 - 下载安装centos7.2镜像虚拟机
 - [安装docker](https://docs.docker.com/engine/installation/linux/centos/)
@@ -16,15 +60,21 @@
 
 **服务启动脚本在 `/usr/lib/systemd/system` 目录下**
 
-### 2 Concept
+#### 3.2 Concept
 
 - [Understand images & container](https://docs.docker.com/linux/step_two/)
 - [Docker Volume](http://cloud.51cto.com/art/201501/463143.htm)
 
+> image和container区别是image就相当于一个编译好的软件，container就好比这个软件的实例，实例可以有多个。image是静态的，container是一个image的运行态。
+
+> volume是一个container的独立于UFS系统的一个存储单元，通常用于挂载宿主的一个目录
+
+<img src='container_explainer.png'></img>
+
 ------
 
 
-### 3 Network
+#### 3.3 Network
 
 - [container网络配置](https://docs.docker.com/engine/userguide/networking/dockernetworks/)
 - [container独立ip配置](http://www.cnblogs.com/feisky/p/4063162.html)
@@ -40,7 +90,7 @@ docker启动的容器的网络默认是桥接虚拟的docker0网卡，它桥接�
  
 
 
-#### 3.1 主机配置多个ip
+#### 3.3.1 主机配置多个ip
 
 ```shell
 cd /etc/sysconfig/network-script
@@ -63,7 +113,7 @@ GATEWAY=10.10.2.1
 > DEVICE字段的名称需要和外面网卡的文件名称一致(去掉ifcfg-),BOOTPROTO改成静态的，IPADDR改成需要的地址即可，NETMASK是子网掩码，GATEWAY是网关地址。实践操作的系统是centos7以上的，里面看到的内容可能不同，直接用这个替换掉就可
 
 
-#### 3.2 启动一个容器
+#### 3.3.2 启动一个容器
 
 ```shell
 docker run -it --name test1 imageid
@@ -77,7 +127,7 @@ docker run -it -p 10.10.2.70:6379:6379 -v /home/yibin/DockerData/wx:/data --name
 安装net-tools工具
 yum install net-tools -y
 
-#### 3.3 搭建游戏服务器的基础image
+#### 3.4 搭建游戏服务器的基础image
 
 1. 新建一个容器
 2. 安装gcc g++ vim net-tools gcc-c++等工具
@@ -85,7 +135,7 @@ yum install net-tools -y
 4. build一个新的image
 
 
-#### 3.3.1 centos7下面安装yum 安装mysql
+##### 3.4.1 centos7下面安装yum 安装mysql
 
 1. `只需在/etc/yum.repos.d/目录下添加以下文件mysql-community.repo文件，内容如下:`
 
@@ -114,7 +164,7 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql
 ```
 2. `最后执行yum install mysql-community-server即可`
 
-#### 3.3.2 容器里面不能用systemctl
+##### 3.4.2 容器里面不能用systemctl
 
 因为systemctl是系统启动的时候的一个进程，容器启动的时候并没有启动它，所以不能用它来启动.
 
@@ -124,7 +174,7 @@ docker run -itd --privileged=true -p 10.10.2.62:3306:3306 -p 10.10.2.62:6379:637
 [refer to](https://forums.docker.com/t/systemctl-status-is-not-working-in-my-docker-container/9075)
 
 
-#### 3.3.3 通过Dockerfile新建一个image
+##### 3.4.3 通过Dockerfile新建一个image
 
 ```Dockerfile
 FROM fgame:base
@@ -154,9 +204,13 @@ CMD ["/usr/sbin/init"]
 expose 3306 6379
 ```
 
+```shell
+
 docker build -t fgame:v1.1 .
 
 docker run -itd --privileged=true -p 10.10.2.62:6379:6379 -p 10.10.2.62:3306:3306 -p 10.10.2.62:9000:9000 -p 10.10.2.62:9002:9002 -p 10.10.2.62:9003:9003 -p 10.10.2.62:9004:9004 -v /home/yibin/DockerData/test1.com:/fgame --name test1.com
+
+```
 
 **需要expose的端口**
 9000 登录服
@@ -167,6 +221,10 @@ docker run -itd --privileged=true -p 10.10.2.62:6379:6379 -p 10.10.2.62:3306:330
 
 在listen的时候本地端口就行，以及游戏逻辑服务下发给ip地址
 
+
+#### 3.5 docker生态
+
+> 围绕docker有着自己的生态，从单机docker到集群管理的docker三剑客(docker swarm compose)，以及docker官网有docker cloud、docker Hub等
 
 > [docker隔离原理说明](http://www.tuicool.com/articles/jeEZ7rV)
 
@@ -182,13 +240,6 @@ docker run -itd --privileged=true -p 10.10.2.62:6379:6379 -p 10.10.2.62:3306:330
 [PREROUTE&POSTROUTE 说明](http://gaodi2002.blog.163.com/blog/static/2320768200702115132683/)
     POSTROUTE 是指源地址转换，PREROUTE是指目标地址转换
 **这样就好理解了，我局域网需要访问外部主机，则需要把我局域网内的主机转换成可以与别人通信的地址。若局域网外的主机回包给局域网内的主机，则需要把目标地址转换一下，知道局域网外的主机发给是的局域网内哪台主机**
-
-
-- [ ] 支持以 PDF 格式导出文稿
-- [ ] 改进 Cmd 渲染算法，使用局部渲染技术提高渲染效率
-- [x] 新增 Todo 列表功能
-- [x] 修复 LaTex 公式渲染问题
-- [x] 新增 LaTex 公式编号功能
 
 
 
