@@ -1,5 +1,16 @@
 ## mysql
 
+
+### linux 源选择版本号安装mysql
+
+> 以下操作是在centos6.5上实践
+
+下载对应的安装包[mysql](http://dev.mysql.com/downloads/repo/yum/)
+
+参考: [安装](http://dev.mysql.com/doc/mysql-yum-repo-quick-guide/en/)
+
+
+
 > mysql是一个免费的开源的关系型数据库系统，为很多企业提供了更多便利，最近在了解这个问题。
 
 mysql提供了多种引擎机制,最熟悉的也是myisam和innodb，列出以下其中的区别.
@@ -71,3 +82,5 @@ ORACLE数据库支持 READ COMMITTED 和 SERIALIZABLE ，不支持 READ UNCOMMIT
 
 [事务和锁](http://www.cnblogs.com/zhaoyl/p/4121010.html)
 [MySQL索引背后的数据结构及算法原理](http://blog.jobbole.com/24006/)
+
+
