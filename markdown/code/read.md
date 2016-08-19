@@ -26,3 +26,5 @@ http://my.oschina.net/itblog/blog/547250
 [mysql](http://blog.jobbole.com/24006/)
 
 [redis](http://origin.redisbook.com/)
+
+[linux cmd](http://linuxtools-rst.readthedocs.io/zh_CN/latest/)
