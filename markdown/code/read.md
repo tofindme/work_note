@@ -28,3 +28,5 @@ http://my.oschina.net/itblog/blog/547250
 [redis](http://origin.redisbook.com/)
 
 [linux cmd](http://linuxtools-rst.readthedocs.io/zh_CN/latest/)
+
+[linux process](https://tobegit3hub1.gitbooks.io)

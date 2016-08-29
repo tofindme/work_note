@@ -43,6 +43,7 @@ db.test.find({})
 db.test.find({name:"yibin"})
 
 - U(Update)
+db.test.update({condition}, {$set:{}})
 
 - D(Delete)
 db.test.remove({_id:""})
@@ -65,6 +66,19 @@ db.test.aggregate([
 db.login2.aggregate([{$group:{_id:"$account_id", date:{$min:"$date"}}}])
 
 
+db.login2.aggregate([{$match:
+                        {
+                            account_id:{$in:["test1","test2"]}
+                        }
+                    },
+                    {$group:
+                        {
+                            _id:{account_id:"$account_id",register_date:"$register_date",date:{$substr:["$date",0,10]}},
+                            date:{$min}
+                        }
+                    }
+                ])
+
 
 #### 留存实践
 
@@ -72,7 +86,7 @@ db.login2.aggregate([{$group:{_id:"$account_id", date:{$min:"$date"}}}])
 
 也样也可用来实现活跃用户统计(指从注册到某自然日活跃的用户数)
 
-```js
+```javascripte
 
 //[参考](http://blog.csdn.net/jq0123/article/details/49762355）
 
@@ -87,14 +101,13 @@ db.login2.aggregate([{$group:{_id:"$account_id", date:{$min:"$date"}}}])
 print("计算留存开始于: " + Date());
 db = db.getSiblingDB("oss");  // use mydb
 
-var begin = getStartDate();
-var end =  formatDate(new Date());
+var begin = "2015-02-01";//getStartDate();
+var end = "2015-02-04";// formatDate(new Date());
 print("准备计算 " + begin + " 到 " + end + "的留存!");
 
 if (begin < end) {
     insertDefaultResult(begin, end);
     calcRegisterCount(begin, end);
-    getLoginAtomic(begin, end)
     calcRetention(begin, end);
     print("计算留存结束于: " + Date());
     print("计算结束.");
@@ -216,44 +229,6 @@ function calcRegisterCount(startDate, endDate) {
     );  // mapReduce()
 }  // function calcRegisterCount()
 
-//得到这段时间内的登录的用户(去重)
-function getLoginAtomic(starDate, endDate){
-    if (undefined == endDate){
-        endDate = formatDate(new Date());
-    }
-
-    var map = function(){
-        //截取 年-月-日
-        var date = this.date.substring(0,10)
-        emit({account_id:this.account_id, date:date}, {account_id:this.account_id, platform: this.platform, date:date, register_date:this.register_date})
-    }
-
-    var reduce = function(key, values){
-        var obj = {account_id:key.account_id, platform: null, date:null, register_date:null}
-        values.forEach(function(v){
-            if (null == obj.platform){
-                obj.platform = v.platform
-            }
-
-            if (null == obj.date){
-                obj.date = v.date
-            }
-
-            if (null == obj.register_date){
-                obj.register_date = v.register_date
-            }
-        })
-        return obj
-    }
-
-    db.login.mapReduce(map, reduce, 
-        {
-            query:{date: {$gte: starDate, $lt: endDate}},
-            out:{"merge": "login_result"}
-        }
-    );
-}
-
 // 读取 retention.login 集合，
 // 计算留存率，保存于 retention.result 集合。
 // startDate is like: "2015-01-01"
@@ -262,6 +237,8 @@ function calcRetention(startDate, endDate) {
     if (undefined == endDate){
         endDate = formatDate(new Date());
     }
+    var name = "yibin";
+
     var mapFunction = function() {
         var key = this.register_date;
         var rg = this.register_date.replace(/-/g,"/");
@@ -270,15 +247,16 @@ function calcRetention(startDate, endDate) {
         var loginDateObj = new Date(lg + " 08:00:00");
         var days = (loginDateObj - registerDateObj) / (24 * 3600 * 1000);
         var value = {date : key, register : 0};
-        var field = days + "_day";  // like: 1_day
+        var field = "day" + days;  // like: day1
         value[field] = 1;
         emit(key, value);
     };  // mapFunction
 
+    //如果mapReduce的out用的reduce那么有相同key的document再会调用一次reduce和finalize函数,这样一来之前的数据就不会被覆盖
     var reduceFunction = function(key, values) {
         var reducedObject = {date : key, register : 0};
         for (var i = 1; i <= 60; i++) {
-            var field = i + "_day";
+            var field = "day" + i;
             reducedObject[field] = 0;
         }
 
@@ -286,7 +264,7 @@ function calcRetention(startDate, endDate) {
             function(value) {
                 reducedObject.register += value.register;
                 for (var i = 1; i <= 60; i++) {
-                    var field = i + "_day";  // like: 1_day
+                    var field = "day" + i;  // like: day1
                     var count = value[field];
                     if (null != count) {
                         reducedObject[field] += count;
@@ -297,13 +275,14 @@ function calcRetention(startDate, endDate) {
         return reducedObject;
     };  // reduceFunction()
 
+    // 这里注意==0时需要返回，这个是算出当次的mapReduce当out是reduce的时候相同key的会执行reduce和finalize函数
     var finalizeFunction = function(key, reducedVal) {
-        if (0 != reducedVal.register)
+        if (0 == reducedVal.register)
             return reducedVal;
         for (var i = 1; i <= 60; i++) {
-            var field = i + "_day";  // 1_day
+            var field = "day" + i;  // day1
             var count = reducedVal[field];
-            reducedVal[count] = count * 100 / reducedVal.register;
+            reducedVal[field] = count * 100 / reducedVal.register;
         }
         return reducedVal;
     };  // finalizeFunction
@@ -316,6 +295,8 @@ function calcRetention(startDate, endDate) {
         }
     );  // mapReduce()
 }  // function calcRetention()
+
+
 
 ```
 
