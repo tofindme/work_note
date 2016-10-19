@@ -8,6 +8,10 @@
 
 http://origin.redisbook.com/
 
+### redis协议
+
+http://doc.redisfans.com/topic/protocol.html
+
 ### 访问频率限制
 
 为了防止在一定时间内一个ip地址访问频率限制，用Redis的list来实现比较方便，用ip地址来用key，把最后访问时间放到链表里去。
