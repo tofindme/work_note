@@ -69,6 +69,7 @@ rz sz
 
 ### 删除很特殊的文件
 - `find . -inum 441511 -delete`
+- `ls -i1|awk '/[^(a-z|A-Z|0-9)]$/{print $1}' |xargs rm -rf`
 > 如果文件命名很怪可以用此命令来删除
 
 
@@ -104,6 +105,8 @@ like man descirbed:"tee - read from standard input and write to standard output 
 #### 数据表中字符集设置
 `show full columns from tablename;`
 
+# 删除指定进程名
+ps -ef |grep hs_server |grep -v grep | awk '{print $2}'|xargs kill 9
 
 
 ----------
