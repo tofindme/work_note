@@ -30,3 +30,9 @@ http://my.oschina.net/itblog/blog/547250
 [linux cmd](http://linuxtools-rst.readthedocs.io/zh_CN/latest/)
 
 [linux process](https://tobegit3hub1.gitbooks.io)
+
+[c++](http://zh.cppreference.com/w/cpp/)
+
+[golang源码分析](https://tiancaiamao.gitbooks.io)
+
+[缺页异常以及cpu的io](http://blog.csdn.net/cosmoslhf/article/details/42743349)
