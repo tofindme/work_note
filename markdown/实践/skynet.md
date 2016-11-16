@@ -520,6 +520,77 @@ struct skynet_module {
 
 #### 6. socket 
 
+socket是lua层来创建的，所以他需要经过lua->c层代码，文件包含lua脚本——》lua-socket.c——》skynet_socket.c——》socket_server.c
+对于listen的fd我们来跟踪一下.
+llisten()
+    skynet_socket_listen()
+        socket_server_listen()      这里通过pipe来通信，通信的内容如下面的结构体说明
+            skynet_socket_poll()
+                socket_server_poll()
+
+```clang
+
+/*
+    The first byte is TYPE
+
+    S Start socket
+    B Bind socket
+    L Listen socket
+    K Close socket
+    O Connect to (Open)
+    X Exit
+    D Send package (high)
+    P Send package (low)
+    A Send UDP package
+    T Set opt
+    U Create UDP socket
+    C set udp address
+ */
+struct request_package {
+    uint8_t header[8];  // 6 bytes dummy
+    union {
+        char buffer[256];
+        struct request_open open;
+        struct request_send send;
+        struct request_send_udp send_udp;
+        struct request_close close;
+        struct request_listen listen;
+        struct request_bind bind;
+        struct request_start start;
+        struct request_setopt setopt;
+        struct request_udp udp;
+        struct request_setudp set_udp;
+    } u;
+    uint8_t dummy[256];
+};
+
+/*
+header[6] header[7] 两个字节+len(union)结构体
+write(fd, &header[6], len+2)
+*/
+```
+
+
+
+
+收到包如何通知gateserver?
+包大小？一个没没读玩又来了另一个包怎么处理？
+
 
 
 #### 7. sample架子理解
+
+把下面的关系弄清楚
+
+client
+
+login
+
+gateserver
+
+agent
+
+client  是客户端发起登录的对象
+login   是处理client登录请求，成功后告知gateserver
+gateserver  类似agent的一房门。主要负责管理网络这块的事件传递到agent
+agent   是消息实际处理者，也就是操作fd连接的
