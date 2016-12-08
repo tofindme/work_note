@@ -520,6 +520,152 @@ struct skynet_module {
 
 #### 6. socket 
 
+socket是lua层来创建的，所以他需要经过lua->c层代码，文件包含lua脚本——》lua-socket.c——》skynet_socket.c——》socket_server.c
+我们来跟踪一下启动一个listen的fd.
+首先是在gateserver.lua里面调用了
+
+```lua
+        socket = socketdriver.listen(address, port)
+        socketdriver.start(socket)
+```
+
+- listen的过程,lua-socket.c里面调用llisten()，然后继续下面的流程
+
+这里通过pipe来通信，通信的内容如下面的结构体说明。
+
+llisten()
+    skynet_socket_listen()
+        socket_server_listen()         创建fd并绑定ip port      
+            skynet_socket_poll()
+                socket_server_poll()   这里循环pipe的消息处理以及event poll处理
+
+通过forward_message返回一个PTYPE_SOCKET类型的的消息，然后再通过下面的unpack函数解压并把消息派发出去
+
+```lua
+    skynet.register_protocol {
+        name = "socket",
+        id = skynet.PTYPE_SOCKET,   -- PTYPE_SOCKET = 6
+        unpack = function ( msg, sz )
+            return netpack.filter( queue, msg, sz)
+        end,
+        dispatch = function (_, _, q, type, ...)
+            queue = q
+            if type then
+                MSG[type](...)
+            end
+        end
+    }
+```
+
+
+
+    poll
+
+        pipe命令读取
+                    _________
+                    |   L      Listen继续处理poll事件
+        1           |   S      退出poll事件，返回SOCKET_OPEN
+                    |   B      
+                    |   O
+
+        socket事件处理
+
+        2           events
+                        accepte
+                        connect
+                        data
+
+    poll后再返回给指定的service去处理消息
+
+
+
+- 接着是start这个fd,实际是记录到socket_server这个里面去
+
+这两步就是创建一个listen的fd了，接下来只需要accepte客户端连接了
+
+
+
+```clang
+
+/*
+    The first byte is TYPE
+
+    S Start socket
+    B Bind socket
+    L Listen socket
+    K Close socket
+    O Connect to (Open)
+    X Exit
+    D Send package (high)
+    P Send package (low)
+    A Send UDP package
+    T Set opt
+    U Create UDP socket
+    C set udp address
+ */
+struct request_package {
+    uint8_t header[8];  // 6 bytes dummy
+    union {
+        char buffer[256];
+        struct request_open open;
+        struct request_send send;
+        struct request_send_udp send_udp;
+        struct request_close close;
+        struct request_listen listen;
+        struct request_bind bind;
+        struct request_start start;
+        struct request_setopt setopt;
+        struct request_udp udp;
+        struct request_setudp set_udp;
+    } u;
+    uint8_t dummy[256];
+};
+
+/*
+header[6] header[7] 两个字节+len(union)结构体
+write(fd, &header[6], len+2)
+*/
+
+
+struct socket_server {
+    int recvctrl_fd;
+    int sendctrl_fd;
+    int checkctrl;
+    poll_fd event_fd;
+    int alloc_id;
+    int event_n;
+    int event_index;
+    struct socket_object_interface soi;
+    struct event ev[MAX_EVENT];
+    struct socket slot[MAX_SOCKET];
+    char buffer[MAX_INFO];
+    uint8_t udpbuffer[MAX_UDP_PACKAGE];
+    fd_set rfds;
+};
+
+```
+
+
+
+
+收到包如何通知gateserver?
+包大小？一个没没读玩又来了另一个包怎么处理？
+
 
 
 #### 7. sample架子理解
+
+把下面的关系弄清楚
+
+client
+
+login
+
+gateserver
+
+agent
+
+client  是客户端发起登录的对象
+login   是处理client登录请求，成功后告知gateserver
+gateserver  类似agent的一房门。主要负责管理网络这块的事件传递到agent
+agent   是消息实际处理者，也就是操作fd连接的
