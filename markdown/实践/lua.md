@@ -3,6 +3,8 @@
 
 > Lua是一门脚本语言，入门非常简单，只要有任何一门语言经验就能快速用Lua来开发自己的程序，弄懂基本的数据类型以及最重要的table数据类型以及metatable之类的就是这门语言最基础的东西了，下面说下基本的数据类型以及Lua和其它语言是如何交互的
 
+**任何语言都是easy to learn,hard to master**
+
 
 #### Lua的数据类型以及区分哪些对像是要被GC的
 
@@ -159,7 +161,6 @@ typedef struct lua_TValue {
 #define ttisnumber(o)       checktype((o), LUA_TNUMBER)
 #define ttisfloat(o)        checktag((o), LUA_TNUMFLT)
 
-> `lobject.h`
 
 ```
 
