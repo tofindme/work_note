@@ -37,6 +37,9 @@ help key-notation 代表按键的意思说明
 
 nmap <C-S> :w<CR>   代表ctrl+s组合键代表保存
 
+gg=G  按`v`选中需要对齐的然后`=`    对齐命令
+
+ctrl+v  进入列编辑模式
 
 ## vim 宏
 
