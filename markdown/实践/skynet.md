@@ -646,10 +646,58 @@ struct socket_server {
 ```
 
 
-
+#### tcp包处理
 
 收到包如何通知gateserver?
 包大小？一个没没读玩又来了另一个包怎么处理？
+
+tcp网络上实际传输的是字节流，所以我们在处理自定义的网络数据包的时候一般都是 len+data来作为一个数字包在tcp上传送，skynet框架是两个字节的长度，
+
+skynet io是读指定长度的包再抛到上面来，处理包的完整性在`lua-netpack.c`,socket的消息描述如下:
+
+> 参考`socket_server.c : function forward_message `
+
+
+```c
+
+struct skynet_socket_message {
+    int type;
+    int id;
+    int ud;
+    char * buffer;
+};
+
+
+/*
+    Each package is uint16 + data , uint16 (serialized in big-endian) is the number of bytes comprising the data .
+ */
+
+struct netpack {
+    int id;           // 收包的fd
+    int size;         // 包的大小
+    void * buffer;    // 包的具体内容
+};
+
+struct uncomplete {                 
+    struct netpack pack;            // 已经从fd上读取的消息
+    struct uncomplete * next;       // 下一条消息
+    int read;                       // 不完整的包已经读取的长度
+    int header;                     // 用来存取第一个包只有一个字节的时候用
+};
+
+struct queue {
+    int cap;                                // 队列的容量
+    int head;                               // 队列头从0开始pop后++   
+    int tail;                               // 队列尾从0开始push后++
+    struct uncomplete * hash[HASHSIZE];     // 不完整包根据fd然后hash存取
+    struct netpack queue[QUEUESIZE];        // 完整包的数组
+};
+
+
+
+```
+
+放到skyknet里面的service回调函数处理这个包，其它的不多说了，直接看`lua-netpack.c : lfilter(...)`里面的源码
 
 
 
