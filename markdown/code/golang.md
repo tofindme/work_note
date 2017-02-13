@@ -1,3 +1,18 @@
+
+####
+
+61.91.161.217    go.googlesource.com
+61.91.161.217    golang.org
+61.91.161.217    www.golang.org
+61.91.161.217    blog.golang.org
+61.91.161.217    play.golang.org
+61.91.161.217    tip.golang.org
+61.91.161.217    tour.golang.org
+74.125.28.14    google.golang.org
+
+
+
+
 ## 1. golang
 
 > Go是Google开发的一种编译型，可平行化，并具有垃圾回收功能的编程语言。
